@@ -72,7 +72,12 @@
 		window.addEventListener("DOMContentLoaded", () => {
 		
 			// Get peers
-			fetch("peers.json").then((response) => {
+			fetch("peers.json", {
+			
+				// Cache
+				cache: "no-cache"
+				
+			}).then((response) => {
 			
 				// Check if getting peers was successful
 				if(response.ok === true) {
