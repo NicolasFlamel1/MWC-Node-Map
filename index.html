@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<head>
+	<meta charset="UTF-8">
+	<title>MWC Node Map</title>
+	
+	<style>
+	
+		body {
+			margin: 0;
+			background: #000011;
+			font: 14pt sans;
+		}
+		
+		* {
+			user-select: none;
+		}
+		
+		p {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			color: white;
+			margin: 0;
+			pointer-events: none;
+			width: calc(100% - 2em);
+			text-align: center;
+		}
+		
+		p.loading.hide, p.error {
+			display: none;
+		}
+		
+		p.error.show {
+			display: unset;
+		}
+		
+		div.globe {
+			visibility: hidden;
+		}
+		
+		div.globe.show {
+			visibility: unset;
+		}
+		
+		p.infoTop, p.infoBottom {
+			display: none;
+			top: 1em;
+			transform: translate(-50%, 0);
+		}
+		
+		p.infoBottom {
+			top: unset;
+			bottom: 1em;
+		}
+		
+		div.globe.show + p.infoTop, div.globe.show + p.infoTop + p.infoBottom {
+			display: unset;
+		}
+	</style>
+	
+	<script src="Globe.GL-2.44.1.min.js" defer></script>
+	
+	<script>
+	
+		// Use strict
+		"use strict";
+		
+		
+		// Main function
+		window.addEventListener("DOMContentLoaded", () => {
+		
+			// Get peers
+			fetch("peers.json").then((response) => {
+			
+				// Check if getting peers was successful
+				if(response.ok === true) {
+				
+					// Parse response as JSON
+					response.json().then((peers) => {
+					
+						// Try
+						try {
+						
+							// Initialize unique peers
+							const uniquePeers = {};
+							
+							// Initialize unique countries
+							const uniqueCountries = [];
+							
+							// Initialize unique Tor addresses
+							const uniqueTorAddresses = [];
+							
+							// Go through all peers
+							for(const peer of peers) {
+							
+								// Check if peer has a longitude and latitude
+								if(peer.longitude !== null && peer.latitude !== null) {
+								
+									// Update peers in unique peers
+									uniquePeers[peer.address] = {
+									
+										// Ring location
+										ringLocation: parseFloat(peer.longitude).toFixed(0) + " " + parseFloat(peer.latitude).toFixed(0),
+										
+										// Longitude
+										longitude: parseFloat(peer.longitude),
+										
+										// Latitude
+										latitude: parseFloat(peer.latitude),
+										
+										// Location
+										location: (((peer.continent !== null) ? peer.continent + ", " : "") + ((peer.country !== null) ? peer.country + ", " : "") + ((peer.subdivision !== null) ? peer.subdivision + ", " : "") + ((peer.city !== null) ? peer.city + ", " : "")).slice(0, -", ".length),
+										
+										// Address
+										address: peer.address,
+										
+										// User agent
+										userAgent: peer.user_agent
+									};
+								}
+								
+								// Check if peer has a country and its not in the list of unique countries
+								if(peer.country !== null && uniqueCountries.includes(peer.country) === false) {
+								
+									// Add peer's country to the list of unique countries
+									uniqueCountries.push(peer.country);
+								}
+								
+								// Check if peer's address is a Tor address and its not in the list of unique Tor addresses
+								if(peer.address.endsWith(".onion") === true && uniqueTorAddresses.includes(peer.address) === false) {
+								
+									// Add peer's address to the list of unique Tor addresses
+									uniqueTorAddresses.push(peer.address);
+								}
+							}
+							
+							// Get points from unique peers
+							const points = Object.values(uniquePeers);
+							
+							// Initialize rings
+							const rings = {};
+							
+							// Go through all points
+							for(const point of points) {
+							
+								// Check if point's ring location doesn't have a ring
+								if(point.ringLocation in rings === false) {
+								
+									// Create ring at ring location
+									rings[point.ringLocation] = {
+									
+										// Longitude
+										lng: point.longitude,
+										
+										// Latitude
+										lat: point.latitude,
+										
+										// Max radius
+										maxRadius: 2,
+										
+										// Propagation speed
+										propagationSpeed: 2,
+										
+										// Repeat period
+										repeatPeriod: 1200
+									};
+								}
+								
+								// Otherwise
+								else {
+								
+									// Update ring at ring location's max radius
+									rings[point.ringLocation].maxRadius = Math.min(rings[point.ringLocation].maxRadius + 0.5, 7);
+									
+									// Update ring at ring location's repeat period
+									rings[point.ringLocation].repeatPeriod = Math.max(rings[point.ringLocation].repeatPeriod - 50, 900);
+								}
+							}
+							
+							// Get saved view first time
+							const viewFirstTime = localStorage.getItem("mwc_node_map_view_first_time") !== "false";
+							
+							// Check if saved view longitude view doesn't exist or is invalid
+							let viewLongitude = parseFloat(localStorage.getItem("mwc_node_map_view_longitude"));
+							if(isFinite(viewLongitude) === false) {
+							
+								// Set view longitude to default value
+								viewLongitude = -30;
+							}
+							
+							// Check if saved view latitude doesn't exist or is invalid
+							let viewLatitude = parseFloat(localStorage.getItem("mwc_node_map_view_latitude"));
+							if(isFinite(viewLatitude) === false) {
+							
+								// Set view latitude to default value
+								viewLatitude = 0;
+							}
+							
+							// Check if saved view altitude doesn't exist or is invalid
+							let viewAltitude = parseFloat(localStorage.getItem("mwc_node_map_view_altitude"));
+							if(isFinite(viewAltitude) === false) {
+							
+								// Set view altitude to default value
+								viewAltitude = 2.5;
+							}
+							
+							// Max point height
+							const MAX_POINT_HEIGHT = 13;
+							
+							// Create globe
+							const globe = new Globe(document.querySelector("div.globe"), {
+							
+								// Animate in
+								animateIn: viewFirstTime
+								
+							}).globeImageUrl("earth.webp").showGraticules(true).atmosphereAltitude("0.1").hexBinPointsData(points).hexTransitionDuration(0).hexBinPointLng((data) => {
+							
+								// Return point longitude
+								return data.longitude;
+								
+							}).hexBinPointLat((data) => {
+							
+								// Return point latitude
+								return data.latitude;
+								
+							}).hexAltitude((data) => {
+							
+								// Return point altitude
+								return Math.min(data.points.length, MAX_POINT_HEIGHT) * 0.02;
+								
+							}).hexBinPointWeight((data) => {
+							
+								// Return point weight
+								return 1;
+								
+							}).hexTopColor((data) => {
+							
+								// Return point top color
+								return "rgb(255, " + ((1 - Math.min(data.sumWeight, MAX_POINT_HEIGHT) / MAX_POINT_HEIGHT) * 255).toFixed() + ", 0)";
+								
+							}).hexSideColor((data) => {
+							
+								// Return point side color
+								return "rgb(255, " + ((1 - Math.min(data.sumWeight, MAX_POINT_HEIGHT) / MAX_POINT_HEIGHT) * 255).toFixed() + ", 0)";
+								
+							}).hexLabel((data) => {
+							
+								// Return point label
+								return "<b>" + data.points[0].location.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") + "</b><ul><li>" + data.points.map((data) => {
+								
+									// Return point info
+									return data.address.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") + " - " + data.userAgent.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+									
+								}).join("</li><li>") + "</li></ul>";
+								
+							}).ringsData(Object.values(rings)).ringMaxRadius("maxRadius").ringPropagationSpeed("propagationSpeed").ringRepeatPeriod("repeatPeriod").ringColor(() => {
+							
+								// Return ring color function
+								return (distance) => {
+								
+									// Return ring color
+									return "rgba(255, 100, 50, " + Math.sqrt(1 - distance).toFixed(3) + ")";
+								};
+								
+							}).pointOfView({
+							
+								// Longitude
+								lng: viewLongitude,
+								
+								// Latitude
+								lat: viewLatitude,
+								
+								// Altitude
+								altitude: viewAltitude
+								
+							}).onZoom((data) => {
+							
+								// Saved view longitude
+								localStorage.setItem("mwc_node_map_view_longitude", data.lng.toFixed(6));
+								
+								// Saved view latitude
+								localStorage.setItem("mwc_node_map_view_latitude", data.lat.toFixed(6));
+								
+								// Saved view altitude
+								localStorage.setItem("mwc_node_map_view_altitude", data.altitude.toFixed(6));
+							});
+							
+							// Set globe's min and max distance
+							globe.controls().minDistance = 140;
+							globe.controls().maxDistance = 900;
+							
+							// Window resize event
+							window.addEventListener("resize", (event) => {
+							
+								// Update globe's size
+								globe.width([event.target.innerWidth]);
+								globe.height([event.target.innerHeight]);
+							});
+							
+							// Globe on globe ready
+							globe.onGlobeReady(() => {
+							
+								// Hide loading
+								document.querySelector("p.loading").classList.add("hide");
+								
+								// Update info top
+								document.querySelector("p.infoTop").textContent = points.length.toFixed() + " MWC node" + ((points.length === 1) ? " was" : "s were") + " recently detected in " + uniqueCountries.length.toFixed() + ((uniqueCountries.length === 1) ? " country" : " countries");
+								
+								// Update info bottom
+								document.querySelector("p.infoBottom").textContent = uniqueTorAddresses.length.toFixed() + " MWC Tor node" + ((uniqueTorAddresses.length === 1) ? " was" : "s were") + " recently detected";
+								
+								// Show globe
+								document.querySelector("div.globe").classList.add("show");
+								
+								// Save view first time
+								localStorage.setItem("mwc_node_map_view_first_time", "false");
+							});
+						}
+						
+						// Catch errors
+						catch(error) {
+						
+							// Log error
+							console.log(error);
+							
+							// Hide loading
+							document.querySelector("p.loading").classList.add("hide");
+							
+							// Show error
+							document.querySelector("p.error").classList.add("show");
+						}
+						
+					// Catch errors
+					}).catch((error) => {
+					
+						// Log error
+						console.log(error);
+						
+						// Hide loading
+						document.querySelector("p.loading").classList.add("hide");
+						
+						// Show error
+						document.querySelector("p.error").classList.add("show");
+					});
+				}
+				
+				// Otherwise
+				else {
+				
+					// Log message
+					console.log("Getting peers failed");
+					
+					// Hide loading
+					document.querySelector("p.loading").classList.add("hide");
+					
+					// Show error
+					document.querySelector("p.error").classList.add("show");
+				}
+				
+			// Catch errors
+			}).catch((error) => {
+			
+				// Log error
+				console.log(error);
+				
+				// Hide loading
+				document.querySelector("p.loading").classList.add("hide");
+				
+				// Show error
+				document.querySelector("p.error").classList.add("show");
+			});
+		});
+	</script>
+</head>
+<body>
+	<p class="loading">Loading…</p>
+	<p class="error">Error occurred</p>
+	<div class="globe"></div>
+	<p class="infoTop"></p>
+	<p class="infoBottom"></p>
+</body>
+</html>
