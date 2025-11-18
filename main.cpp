@@ -8,6 +8,7 @@
 #include <memory>
 #include <net/if.h>
 #include "./node/mwc_validation_node.h"
+#include <regex>
 #include <termios.h>
 
 using namespace std;
@@ -60,6 +61,9 @@ static const double MIN_LATITUDE = -90;
 
 // Max latitude
 static const double MAX_LATITUDE = 90;
+
+// Known user agent pattern
+static const regex KNOWN_USER_AGENT_PATTERN(R"(^(?:MW\/MWC|MWC Pay|MWC Node Map) \d{1,3}\.\d{1,3}\.\d{1,3}$)");
 
 
 // Structures
@@ -237,13 +241,13 @@ int main() {
 				fout << (fileExists ? ',' : '[') << endl << "{"
 				
 					// Address
-					"\"address\":" << quoted(peerIdentifier) << ","
+					"\"address\":" << quoted(peerIdentifier.ends_with(".onion") ? to_string(hash<string>{}(peerIdentifier)) + ".onion" : peerIdentifier) << ","
 					
 					// Capabilities
 					"\"capabilities\":\"" << static_cast<uint32_t>(capabilities) << "\","
 					
 					// User agent
-					"\"user_agent\":" << quoted(userAgent) << ","
+					"\"user_agent\":" << quoted(regex_match(userAgent, KNOWN_USER_AGENT_PATTERN) ? userAgent : "Unknown") << ","
 					
 					// Base fee
 					"\"base_fee\":\"" << baseFee << "\","
