@@ -48,7 +48,7 @@ static const uint16_t TOR_SOCKS_PROXY_PORT = 9050;
 #endif
 
 // Upload recent peers JSON file interval
-static const chrono::hours UPLOAD_RECENT_PEERS_JSON_FILE_INTERVAL = 24h;
+static const chrono::hours UPLOAD_RECENT_PEERS_JSON_FILE_INTERVAL = 168h;
 
 // Min longitude
 static const double MIN_LONGITUDE = -180;
@@ -63,7 +63,7 @@ static const double MIN_LATITUDE = -90;
 static const double MAX_LATITUDE = 90;
 
 // Known user agent pattern
-static const regex KNOWN_USER_AGENT_PATTERN(R"(^(?:MW\/MWC|MWC Pay|MWC Node Map) \d{1,3}\.\d{1,3}\.\d{1,3}$)");
+static const regex KNOWN_USER_AGENT_PATTERN(R"(^(?:MW\/MWC|MWC Validation Node|MWC Pay|MWC Node Map) \d{1,3}\.\d{1,3}\.\d{1,3}$)");
 
 
 // Structures
