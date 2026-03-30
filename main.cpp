@@ -63,7 +63,7 @@ static const double MIN_LATITUDE = -90;
 static const double MAX_LATITUDE = 90;
 
 // Known user agent pattern
-static const regex KNOWN_USER_AGENT_PATTERN(R"(^(?:MW\/MWC |MWC Validation Node |MWC Pay |MWC Node Map |mwc-node-cpp\/)\d{1,3}\.\d{1,3}\.\d{1,3}$)");
+static const regex KNOWN_USER_AGENT_PATTERN(R"(^(?:MW\/MWC |MWC Validation Node |MWC Pay |MWC Node Map |mwc-node-cpp\/|mwc-node-go\/)\d{1,3}\.\d{1,3}\.\d{1,3}$)");
 
 
 // Structures
