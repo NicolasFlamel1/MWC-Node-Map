@@ -13,6 +13,9 @@ ifeq ($(FLOONET),1)
 
 	# Enable floonet
 	CFLAGS += -DENABLE_FLOONET
+	
+	# Change program name
+	PROGRAM_NAME = $(subst $\",,$(NAME) "Floonet")
 endif
 
 # Make

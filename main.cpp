@@ -19,9 +19,6 @@ using namespace std;
 // IP geolocate database location
 static const char *IP_GEOLOCATE_DATABASE_LOCATION = "./ip_geolocate_database.mmdb";
 
-// Recent peers JSON location
-static const char *RECENT_PEERS_JSON_LOCATION = "./peers.json";
-
 // Git repo refspecs
 static const char *GIT_REPO_REFSPECS = "refs/heads/master";
 
@@ -40,11 +37,17 @@ static const uint16_t TOR_SOCKS_PROXY_PORT = 9050;
 	// Listening port
 	static const uint16_t LISTENING_PORT = 9031;
 	
+	// Recent peers JSON location
+	static const char *RECENT_PEERS_JSON_LOCATION = "./floonet_peers.json";
+	
 // Otherwise
 #else
 
 	// Listening port
 	static const uint16_t LISTENING_PORT = 9030;
+	
+	// Recent peers JSON location
+	static const char *RECENT_PEERS_JSON_LOCATION = "./mainnet_peers.json";
 #endif
 
 // Upload recent peers JSON file interval

@@ -2,7 +2,7 @@
 <html>
 <head>
 	<meta charset="UTF-8">
-	<title>MWC Node Map</title>
+	<title></title>
 	
 	<style>
 	
@@ -71,10 +71,18 @@
 		
 		
 		// Main function
+		
+		// Get is mainnet
+		const isMainnet = typeof location !== "object" || location === null || "search" in location === false || typeof location.search !== "string" || /(?:\?|&)Network\+Type=Floonet(?:$|&)/ui.test(location.search) !== true;
+		
+		// Set title
+		document.title = "MWC " + ((isMainnet === true) ? "Mainnet" : "Floonet") + " Node Map"
+		
+		// Window on DOM content loaded
 		window.addEventListener("DOMContentLoaded", () => {
 		
 			// Get peers
-			fetch("peers.json", {
+			fetch((isMainnet === true) ? "mainnet_peers.json" : "floonet_peers.json", {
 			
 				// Cache
 				cache: "no-cache"
@@ -186,31 +194,34 @@
 								}
 							}
 							
-							// Get saved view first time
-							const viewFirstTime = localStorage.getItem("mwc_node_map_view_first_time") !== "false";
+							// Set local storage prefix
+							const localStoragePrefix = "mwc_node_map_" + ((isMainnet === true) ? "mainnet_" : "floonet_");
 							
-							// Check if saved view longitude view doesn't exist or is invalid
-							let viewLongitude = parseFloat(localStorage.getItem("mwc_node_map_view_longitude"));
-							if(isFinite(viewLongitude) === false) {
+							// Get saved first time
+							const firstTime = localStorage.getItem(localStoragePrefix + "first_time") !== "false";
 							
-								// Set view longitude to default value
-								viewLongitude = -30;
+							// Check if saved longitude doesn't exist or is invalid
+							let longitude = parseFloat(localStorage.getItem(localStoragePrefix + "longitude"));
+							if(isFinite(longitude) === false) {
+							
+								// Set longitude to default value
+								longitude = -30;
 							}
 							
-							// Check if saved view latitude doesn't exist or is invalid
-							let viewLatitude = parseFloat(localStorage.getItem("mwc_node_map_view_latitude"));
-							if(isFinite(viewLatitude) === false) {
+							// Check if saved latitude doesn't exist or is invalid
+							let latitude = parseFloat(localStorage.getItem(localStoragePrefix + "latitude"));
+							if(isFinite(latitude) === false) {
 							
-								// Set view latitude to default value
-								viewLatitude = 0;
+								// Set latitude to default value
+								latitude = 0;
 							}
 							
-							// Check if saved view altitude doesn't exist or is invalid
-							let viewAltitude = parseFloat(localStorage.getItem("mwc_node_map_view_altitude"));
-							if(isFinite(viewAltitude) === false) {
+							// Check if saved altitude doesn't exist or is invalid
+							let altitude = parseFloat(localStorage.getItem(localStoragePrefix + "altitude"));
+							if(isFinite(altitude) === false) {
 							
-								// Set view altitude to default value
-								viewAltitude = 2.5;
+								// Set altitude to default value
+								altitude = 2.5;
 							}
 							
 							// Max point height
@@ -220,7 +231,7 @@
 							const globe = new Globe(document.querySelector("div.globe"), {
 							
 								// Animate in
-								animateIn: viewFirstTime
+								animateIn: firstTime
 								
 							}).globeImageUrl("earth.webp").showGraticules(true).atmosphereAltitude("0.1").hexBinPointsData(points).hexTransitionDuration(0).hexBinPointLng((data) => {
 							
@@ -274,24 +285,24 @@
 							}).pointOfView({
 							
 								// Longitude
-								lng: viewLongitude,
+								lng: longitude,
 								
 								// Latitude
-								lat: viewLatitude,
+								lat: latitude,
 								
 								// Altitude
-								altitude: viewAltitude
+								altitude: altitude
 								
 							}).onZoom((data) => {
 							
-								// Saved view longitude
-								localStorage.setItem("mwc_node_map_view_longitude", data.lng.toFixed(6));
+								// Saved longitude
+								localStorage.setItem(localStoragePrefix + "longitude", data.lng.toFixed(6));
 								
-								// Saved view latitude
-								localStorage.setItem("mwc_node_map_view_latitude", data.lat.toFixed(6));
+								// Saved latitude
+								localStorage.setItem(localStoragePrefix + "latitude", data.lat.toFixed(6));
 								
-								// Saved view altitude
-								localStorage.setItem("mwc_node_map_view_altitude", data.altitude.toFixed(6));
+								// Saved altitude
+								localStorage.setItem(localStoragePrefix + "altitude", data.altitude.toFixed(6));
 							});
 							
 							// Set globe's min and max distance
@@ -313,16 +324,16 @@
 								document.querySelector("p.loading").classList.add("hide");
 								
 								// Update info top
-								document.querySelector("p.infoTop").textContent = points.length.toFixed() + " MWC node" + ((points.length === 1) ? " was" : "s were") + " recently detected in " + uniqueCountries.length.toFixed() + ((uniqueCountries.length === 1) ? " country" : " countries");
+								document.querySelector("p.infoTop").textContent = points.length.toFixed() + " MWC " + ((isMainnet === true) ? "mainnet" : "floonet") + " node" + ((points.length === 1) ? " was" : "s were") + " recently detected in " + uniqueCountries.length.toFixed() + ((uniqueCountries.length === 1) ? " country" : " countries");
 								
 								// Update info bottom
-								document.querySelector("p.infoBottom").textContent = uniqueTorAddresses.length.toFixed() + " MWC Tor node" + ((uniqueTorAddresses.length === 1) ? " was" : "s were") + " recently detected";
+								document.querySelector("p.infoBottom").textContent = uniqueTorAddresses.length.toFixed() + " MWC " + ((isMainnet === true) ? "mainnet" : "floonet") + " Tor node" + ((uniqueTorAddresses.length === 1) ? " was" : "s were") + " recently detected";
 								
 								// Show globe
 								document.querySelector("div.globe").classList.add("show");
 								
-								// Save view first time
-								localStorage.setItem("mwc_node_map_view_first_time", "false");
+								// Save first time
+								localStorage.setItem(localStoragePrefix + "first_time", "false");
 							});
 						}
 						
